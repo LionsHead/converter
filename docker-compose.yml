@@ -1,0 +1,47 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - node_modules_volume:/app/node_modules
+      - bundle_cache:/usr/local/bundle
+    env_file:
+      - path: .env.local
+        required: false
+    depends_on:
+      - chrome
+    networks:
+      - app_network
+    command: bash -c "bundle exec rails server -b 0.0.0.0"
+
+  chrome:
+    image: browserless/chrome:latest
+    ports:
+      - "3001:3000"
+      - "9222:9222"
+    environment:
+      - DEBUG=browserless:*
+      # - MAX_CONCURRENT_SESSIONS=10
+      # - CONNECTION_TIMEOUT=60000
+      # - MAX_QUEUE_LENGTH=100
+      # - PREBOOT_CHROME=true
+      # - DEMO_MODE=false
+      # - ENABLE_CORS=true
+      # - DEFAULT_LAUNCH_ARGS=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]
+    env_file:
+      - .env.local
+    networks:
+      - app_network
+    shm_size: 2gb
+    restart: unless-stopped
+
+volumes:
+  node_modules_volume:
+  bundle_cache:
+
+networks:
+  app_network:
+    driver: bridge

@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint app/frontend --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write app/frontend"
+  },
+  "devDependencies": {
+    "vite": "^5.4.19",
+    "vite-plugin-ruby": "^5.1.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}
