@@ -1,0 +1,16 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+yandex:
+  service: S3
+  access_key_id: <%= ENV.fetch("S3_ACCESS_KEY", "") %>
+  secret_access_key: <%= ENV.fetch("S3_SECRET_KEY", "") %>
+  region: ru-central1
+  bucket: test-bucked-<%= Rails.env %>
+  endpoint: 'https://storage.yandexcloud.net'
+  force_path_style: true

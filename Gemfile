@@ -9,8 +9,26 @@ gem "ferrum_pdf"
 
 gem "vite_rails"
 
+gem "rswag-api"
+gem "rswag-ui"
+
+gem "alba"
+
+gem "aws-sdk-s3", require: false
+
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  gem "rubocop"
+  gem "rubocop-rails-omakase", require: false
+
+  gem "rswag-specs"
+  gem "rspec-rails"
+
+  gem "shoulda-matchers"
+
+  gem "factory_bot_rails"
+  gem "faker"
 end

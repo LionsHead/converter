@@ -1,33 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
   const [file, setFile] = useState(null);
-  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [documentId, setDocumentId] = useState(null);
+  const [documentData, setDocumentData] = useState(null);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
-    setDownloadUrl(null);
+    setDocumentId(null);
+    setDocumentData(null);
     setError(null);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
     if (!file) {
-      setError('Выберите файл!');
+      setError('Please select a file!');
       return;
     }
 
-    setIsLoading(true);
+    setIsUploading(true);
     setError(null);
-    setDownloadUrl(null);
+    setDocumentId(null);
+    setDocumentData(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('svg_file', file);
 
     try {
-      const response = await fetch('api/upload', {
+      const response = await fetch('/api/v1/documents', {
         method: 'POST',
         body: formData,
       });
@@ -37,46 +40,155 @@ function App() {
       }
 
       const data = await response.json();
-      if (data.success && data.url) {
-        setDownloadUrl(data.url);
+      if (data.id) {
+        setDocumentId(data.id);
+        setDocumentData(data);
+        setIsPolling(true);
       } else {
-        setError(data.error || 'Unexpected error occurred');
+        setError('Unexpected error occurred');
       }
     } catch (err) {
       setError(err.message || 'Upload failed');
     } finally {
-      setIsLoading(false);
+      setIsUploading(false);
+    }
+  };
+
+  const checkDocumentStatus = async (id) => {
+    try {
+      const response = await fetch(`/api/v1/documents/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to check document status');
+      }
+      const data = await response.json();
+      setDocumentData(data);
+
+      if (data.status === 'completed' || data.status === 'failed' || data.status === 'validation_failed') {
+        setIsPolling(false);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to check status');
+      setIsPolling(false);
+    }
+  };
+
+  useEffect(() => {
+    let interval;
+    if (isPolling && documentId) {
+      interval = setInterval(() => {
+        checkDocumentStatus(documentId);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [isPolling, documentId]);
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'Processing...';
+      case 'validation':
+        return 'Validating...';
+      case 'validation_failed':
+        return 'Validation failed';
+      case 'render':
+        return 'Render in progress...';
+      case 'completed':
+        return 'Completed!';
+      case 'failed':
+        return 'Failed';
+      default:
+        return status;
+    }
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'status-pending';
+      case 'validation':
+        return 'status-validation';
+      case 'validation_failed':
+        return 'status-validation-failed';
+      case 'render':
+        return 'status-render';
+      case 'completed':
+        return 'status-completed';
+      case 'failed':
+        return 'status-failed';
+      default:
+        return '';
     }
   };
 
   return (
     <div className="hero">
-      <h1 className="hero-title">Generate PDF from SVG </h1>
-      <form onSubmit={handleSubmit} className="upload-form">
+      <h1 className="hero-title">Generate PDF from SVG</h1>
+
+      <div className="upload-form">
         <input
           type="file"
+          accept=".svg"
           onChange={handleFileChange}
           className="file-input"
-          disabled={isLoading}
+          disabled={isUploading || isPolling}
         />
         <button
-          type="submit"
+          onClick={handleSubmit}
           className="btn btn-primary"
-          disabled={isLoading || !file}
+          disabled={isUploading || !file || isPolling}
         >
-          {isLoading ? 'Upload...' : 'Upload SVG'}
+          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          {isUploading ? ' Uploading...' : ' Upload SVG'}
         </button>
-      </form>
-      {file && !downloadUrl && <p className="file-info">File: {file.name}</p>}
-      {error && <p className="error-message">{error}</p>}
-      {downloadUrl && (
-        <a
-          href={downloadUrl}
-          download
-          className="btn btn-primary download-btn"
-        >
-          Export PDF
-        </a>
+      </div>
+
+      {file && !documentData && (
+        <p className="file-info">File: {file.name}</p>
+      )}
+
+      {error && (
+        <p className="error-message">{error}</p>
+      )}
+
+      {documentData && (
+        <div className="document-status">
+          <p className="file-info">
+            File: {documentData.original_file_name}
+          </p>
+
+          <div className={`status ${getStatusClass(documentData.status)}`}>
+            <span className="status-text">
+              Status: {getStatusText(documentData.status)}
+            </span>
+            {isPolling && (
+              <div className="spinner"></div>
+            )}
+          </div>
+
+          {documentData.pdf_file_url && (
+            <a
+              href={documentData.pdf_file_url}
+              download
+              className="btn btn-primary download-btn"
+            >
+              <i class="fa-solid fa-arrow-down-from-bracket"></i>
+              {' Download PDF'}
+            </a>
+          )}
+
+          {(documentData.status === 'failed' || documentData.status === 'validation_failed') && (
+            <button
+              onClick={() => {
+                setDocumentData(null);
+                setDocumentId(null);
+                setFile(null);
+              }}
+              className="btn btn-secondary retry-btn"
+            >
+              <i class="fa-solid fa-arrows-rotate"></i> Try Again
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
