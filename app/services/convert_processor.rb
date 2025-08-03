@@ -10,6 +10,8 @@ class ConvertProcessor < BaseService
 
     success(@document)
   rescue StandardError => e
+    error "ConvertProcessor failed: #{e.message}"
+    error "Backtrace: #{e.backtrace.join("\n")}"
     @document.fail! unless @document.failed? || @document.validation_failed?
 
     failure(error: e.message)
@@ -41,7 +43,16 @@ class ConvertProcessor < BaseService
   end
 
   def generate_pdf
-    pdf_result = PdfGenerator.call(svg_content, watermark_text: "Endurance for MaxaTech")
+    info "ConvertProcessor: Starting PDF generation"
+
+    custom_config = {
+      page_config: custom_page_config,
+      watermark_config: {
+        text: "Endurance"
+      }
+    }
+
+    pdf_result = PdfGenerator.call(svg_content, **custom_config)
 
     fail!(error: "PDF generation failed") if pdf_result.failure?
 
@@ -66,6 +77,17 @@ class ConvertProcessor < BaseService
   def generate_pdf_filename
     base_name = File.basename(document.original_file_name, File.extname(document.original_file_name))
     "#{base_name}_#{Time.current.to_i}.pdf"
+  end
+
+  def custom_page_config
+    {
+      margin: {
+        top: "50mm",
+        right: "20mm",
+        bottom: "50mm",
+        left: "20mm"
+      }
+    }
   end
 
   def fail!(error:)

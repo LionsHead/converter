@@ -195,16 +195,25 @@ RSpec.describe ConvertProcessor do
   end
 
   describe 'PDF generator watermark' do
+    let(:watermark_config) { { text: 'Endurance' } }
+
     before do
       allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
       allow(PdfGenerator).to receive(:call).and_return(success_result(pdf_content))
       allow(document).to receive(:save!)
     end
-
     it 'should call PdfGenerator with watermark text' do
       expect(PdfGenerator).to receive(:call).with(
         svg_content,
-        watermark_text: "Endurance for MaxaTech"
+        page_config: {
+          margin: {
+            bottom: "50mm",
+            left: "20mm",
+            right: "20mm",
+            top: "50mm"
+          }
+        },
+        watermark_config: watermark_config
       )
       result
     end

@@ -1,7 +1,8 @@
 class PdfGenerator < BaseService
-  def initialize(svg_content, watermark_text: "")
+  def initialize(svg_content, page_config: {}, watermark_config: {})
     @svg_content = svg_content
-    @watermark_text = watermark_text
+    @page_config = page_config
+    @watermark_config = watermark_config
   end
 
   def call
@@ -13,22 +14,22 @@ class PdfGenerator < BaseService
 
     pdf_content = generate_pdf_from html_content
 
-    info "PdfGenerator: pdf_content size: #{pdf_content.size} bytes" if pdf_content
     return failure(error: "PDF generation failed: pdf content is nil") if pdf_content.blank?
 
     success(pdf_content)
   rescue StandardError => e
     error "PDF generation failed: #{e.message}"
     error "Backtrace: #{e.backtrace.join("\n")}"
-    nil
+
+    failure(error: e.message)
   end
 
   private
 
-  attr_reader :svg_content, :watermark_text
+  attr_reader :svg_content, :page_config, :watermark_config
 
   def build_html_content
-    result = HtmlBuilder.call(svg_content, watermark_text)
+    result = Pdf::HtmlBuilder.call(svg_content, watermark_config: watermark_config)
     return nil if result.failure?
 
     result.data
@@ -48,12 +49,7 @@ class PdfGenerator < BaseService
       browser.pdf(
         path: pdf_file.path,
         format: :A4,
-        margin: {
-          top: "30mm",
-          right: "20mm",
-          bottom: "30mm",
-          left: "20mm"
-        },
+        margin: pdf_margins,
         print_background: true,
         prefer_css_page_size: false
       )
@@ -64,6 +60,17 @@ class PdfGenerator < BaseService
         raise "PDF file is empty or doesn't exist"
       end
     end
+  end
+
+  def pdf_margins
+    default_margins = {
+      top: "20mm",
+      right: "20mm",
+      bottom: "20mm",
+      left: "20mm"
+    }
+
+    default_margins.merge(page_config.fetch(:margin, {}))
   end
 
   def build_headless_browser
@@ -96,7 +103,6 @@ class PdfGenerator < BaseService
     }
   end
 
-  # local debug - remove this method if not needed
   def find_local_chrome_path
     paths = [
       "/usr/bin/chromium",

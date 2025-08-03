@@ -1,7 +1,17 @@
-class HtmlBuilder < BaseService
-    def initialize(svg_content, watermark_text)
+module Pdf
+  class HtmlBuilder < BaseService
+    DEFAULT_CONFIG = {
+      text: "Maxa Watermark",
+      size: { width: 250, height: 250 },
+      font_size: 48,
+      opacity: 0.1,
+      rotation: -40,
+      repeat_size: { width: 250, height: 150 }
+    }.freeze
+
+    def initialize(svg_content, watermark_config: {})
       @svg_content = svg_content
-      @watermark_text = watermark_text
+      @watermark_config = DEFAULT_CONFIG.deep_merge(watermark_config)
     end
 
     def call
@@ -12,22 +22,27 @@ class HtmlBuilder < BaseService
 
       success(html_content)
     rescue StandardError => e
+      error "HTML generation failed: #{e.message}"
+
       failure(error: e.message)
     end
 
     private
 
-    attr_reader :svg_content, :watermark_text
+    attr_reader :svg_content, :watermark_config
+
+    def watermark_text
+      watermark_config[:text]
+    end
 
     def build_watermark_pattern
-      escaped_watermark_text = ERB::Util.html_escape(watermark_text)
+      escaped_watermark_text = ERB::Util.html_escape(watermark_config[:text])
 
-      # SVG-паттерн для повторяющегося водяного знака
       <<~SVG_PATT
-        <svg width="250" height="120" viewBox="0 0 250 120" xmlns="http://www.w3.org/2000/svg">
-            <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="28" font-weight="900"
-                  fill="rgba(0,0,0,0.04)" text-anchor="middle" dominant-baseline="middle"
-                  transform="rotate(-40 125 60)">
+        <svg width="#{watermark_config[:size][:width]}" height="#{watermark_config[:size][:height]}" viewBox="0 0 #{watermark_config[:size][:width]} #{watermark_config[:size][:height]}" xmlns="http://www.w3.org/2000/svg">
+            <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="#{watermark_config[:font_size]}" font-weight="900"
+                  fill="rgba(0,0,0,#{watermark_config[:opacity]})" text-anchor="middle" dominant-baseline="middle"
+                  transform="rotate(#{watermark_config[:rotation]} #{watermark_config[:size][:width]/2} #{watermark_config[:size][:height]/2})">
                 #{escaped_watermark_text}
             </text>
         </svg>
@@ -184,7 +199,7 @@ class HtmlBuilder < BaseService
           background-image: url('#{data_uri}');
           background-repeat: repeat;
           background-position: 0 0;
-          background-size: 150px 75px;
+          background-size: #{watermark_config[:repeat_size][:width]}px #{watermark_config[:repeat_size][:height]}px;
         }
 
         @media print {
@@ -195,4 +210,5 @@ class HtmlBuilder < BaseService
         }
       CSS
     end
+  end
 end
