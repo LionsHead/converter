@@ -32,14 +32,22 @@ class ConvertProcessor < BaseService
       fail!(error: "SVG content is blank")
     end
 
-    validation_result = Svg::Validator.call(svg_content)
+    result = Svg::LlmValidator.call(svg_content)
 
-    unless validation_result.success?
-      document.validation_fail!
-      fail!(error: "SVG validation failed: #{validation_result.error}")
+    if result.success?
+      if result.data[:fixed]
+        info "ConvertProcessor: apply fixed data"
+        # TODO: or render second versions
+        # issues_found: ["list of issues that were fixed"],
+        # warnings: ["list of potential issues or suggestions"]
+        @svg_content = result.data[:svg_content]
+      end
+      document.validation_succeed!
+      return
     end
 
-    document.validation_succeed!
+    document.validation_fail!
+    fail!(error: "SVG validation failed: #{result.error}")
   end
 
   def generate_pdf

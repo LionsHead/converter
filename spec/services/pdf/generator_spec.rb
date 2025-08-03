@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Pdf::Generator do
+  include_context 'service result helpers'
+
   let(:svg_content) { '<svg><circle cx="50" cy="50" r="40" fill="red" /></svg>' }
   let(:page_config) { { margin: { top: '10mm' } } }
   let(:watermark_config) { { text: 'Sample Watermark', opacity: 0.5 } }
@@ -8,16 +10,19 @@ RSpec.describe Pdf::Generator do
   let(:pdf_content) { 'PDF binary content' }
 
   describe '.call' do
-    subject(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
-
     context 'when PDF generation succeeds' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
-      it { should be_successful_service_result }
-      it { expect(result.data).to eq(pdf_content) }
+      it_behaves_like 'successful service result'
+
+      it 'returns PDF content' do
+        expect(result.data).to eq(pdf_content)
+      end
 
       it 'builds HTML with correct parameters' do
         result
@@ -26,62 +31,67 @@ RSpec.describe Pdf::Generator do
     end
 
     context 'when HTML building fails' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(failure_result("HTML build error"))
       end
 
-      it { should be_failed_service_result }
-      it { expect(result.error).to match(/html content is nil/) }
+      it_behaves_like 'failed service result', 'html content is nil'
     end
 
     context 'when HTML content is blank' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(''))
       end
 
-      it { should be_failed_service_result }
-      it { expect(result.error).to match(/html content is nil/) }
+      it_behaves_like 'failed service result', 'html content is nil'
     end
 
     context 'when PDF generation returns nil' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(nil)
       end
 
-      it { should be_failed_service_result }
-      it { expect(result.error).to match(/pdf content is nil/) }
+      it_behaves_like 'failed service result', 'pdf content is nil'
     end
 
     context 'when PDF generation returns empty content' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return('')
       end
 
-      it { should be_failed_service_result }
-      it { expect(result.error).to match(/pdf content is nil/) }
+      it_behaves_like 'failed service result', 'pdf content is nil'
     end
 
     context 'when exception occurs during generation' do
+      let(:result) { described_class.call(svg_content, page_config: page_config, watermark_config: watermark_config) }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_raise(StandardError, "Chrome crashed")
       end
 
-      it { should be_failed_service_result }
-      it { expect(result.error).to eq("Chrome crashed") }
+      it_behaves_like 'failed service result', 'Chrome crashed'
     end
 
     context 'with minimal parameters' do
-      subject(:result) { described_class.call(svg_content) }
+      let(:result) { described_class.call(svg_content) }
 
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
-      it { should be_successful_service_result }
+      it_behaves_like 'successful service result'
 
       it 'passes empty configs to HTML builder' do
         result
@@ -92,45 +102,52 @@ RSpec.describe Pdf::Generator do
 
   describe '#call instance method' do
     subject(:generator) { described_class.new(svg_content, page_config: page_config, watermark_config: watermark_config) }
-    let(:result) { generator.call }
 
     context 'when generation succeeds' do
+      let(:result) { generator.call }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
-      it { expect(result).to be_successful_service_result }
-      it { expect(result.data).to eq(pdf_content) }
+      it_behaves_like 'successful service result'
+
+      it 'returns PDF content' do
+        expect(result.data).to eq(pdf_content)
+      end
     end
 
     context 'when HTML building fails' do
+      let(:result) { generator.call }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(failure_result("HTML error"))
       end
 
-      it { expect(result).to be_failed_service_result }
-      it { expect(result.error).to match(/html content is nil/) }
+      it_behaves_like 'failed service result', 'html content is nil'
     end
 
     context 'when PDF generation fails' do
+      let(:result) { generator.call }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_return(nil)
       end
 
-      it { expect(result).to be_failed_service_result }
-      it { expect(result.error).to match(/pdf content is nil/) }
+      it_behaves_like 'failed service result', 'pdf content is nil'
     end
 
     context 'when exception is raised' do
+      let(:result) { generator.call }
+
       before do
         allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_raise(StandardError, "PDF error")
       end
 
-      it { expect(result).to be_failed_service_result }
-      it { expect(result.error).to eq("PDF error") }
+      it_behaves_like 'failed service result', 'PDF error'
     end
   end
 

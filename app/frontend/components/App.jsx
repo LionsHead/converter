@@ -88,7 +88,7 @@ function App() {
         return 'Waiting...';
       case 'processing':
         return 'Processing...';
-      case 'validation':
+      case 'validating':
         return 'Validating...';
       case 'validation_failed':
         return 'Validation failed';

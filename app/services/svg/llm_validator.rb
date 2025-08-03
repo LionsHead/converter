@@ -5,10 +5,10 @@ require "uri"
 class Svg::LlmValidator < BaseService
   API_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions".freeze
 
-  def initialize(svg_content:)
+  def initialize(svg_content)
     @svg_content = svg_content
     @api_key = ENV.fetch("OPENROUTER_API_KEY")
-    @model = ENV.fetch("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+    @model = ENV.fetch("OPENROUTER_MODEL", "google/gemini-2.5-flash")
   end
 
   def call
@@ -30,11 +30,9 @@ class Svg::LlmValidator < BaseService
   def validate_and_fix_svg
     response = make_api_request
 
-    if response.code == "200"
-      parse_response(response)
-    else
-      failure(error: "API request failed: #{response.code}")
-    end
+    return parse_response(response) if response.code == "200"
+
+    failure(error: "API request failed: #{response.code}")
   end
 
   def make_api_request
@@ -68,7 +66,7 @@ class Svg::LlmValidator < BaseService
         type: "json_object"
       },
       temperature: 0.7,
-      max_tokens: 4000
+      max_tokens: 100_000
     }
   end
 
@@ -125,15 +123,18 @@ class Svg::LlmValidator < BaseService
   end
 
   def parse_response(response)
-    result = JSON.parse(response.body)
-    content = result.dig("choices", 0, "message", "content")
+    result = JSON.parse(response.body, symbolize_names: true)
+    content = result.dig(:choices, 0, :message, :content)
+
+    info "SVG llm result: #{result}"
 
     return failure(error: "Empty response from LLM service") if content.blank?
 
     svg_data = JSON.parse(content)
+    info "SVG validation result: #{svg_data.inspect}"
 
     success({
-      valid: svg_data["valid"],
+      fixed: svg_data["fixed"],
       svg_content: svg_data["svg_content"],
       issues_found: svg_data["issues_found"] || [],
       warnings: svg_data["warnings"] || []

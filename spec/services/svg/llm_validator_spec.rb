@@ -2,6 +2,7 @@ require 'net/http'
 require 'rails_helper'
 
 RSpec.describe Svg::LlmValidator do
+  include_context 'service result helpers'
   let(:valid_svg) do
     <<~SVG
       <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
@@ -37,39 +38,35 @@ RSpec.describe Svg::LlmValidator do
 
   before do
     ENV['OPENROUTER_API_KEY'] = 'test_api_key'
-    ENV['OPENROUTER_MODEL'] = 'anthropic/claude-3.5-sonnet'
+    ENV['OPENROUTER_MODEL'] = 'google/gemini-2.5-flash'
   end
 
   describe '#call' do
     context 'when API key is missing' do
       before { ENV['OPENROUTER_API_KEY'] = '' }
 
-      it 'returns failure with configuration error' do
-        result = described_class.call(svg_content: valid_svg)
+      let(:result) { described_class.call(valid_svg) }
 
-        expect(result).to be_failure
-        expect(result.error).to eq('OpenRouter API key not configured')
-      end
+      it_behaves_like 'failed service result', 'OpenRouter API key not configured'
     end
 
     context 'when SVG content is invalid' do
-      it 'returns failure for empty content' do
-        result = described_class.call(svg_content: '')
+      context 'with empty content' do
+        let(:result) { described_class.call('') }
 
-        expect(result).to be_failure
-        expect(result.error).to eq('Invalid SVG content')
+        it_behaves_like 'failed service result', 'Invalid SVG content'
       end
 
-      it 'returns failure for non-SVG content' do
-        result = described_class.call(svg_content: 'not an svg')
+      context 'with non-SVG content' do
+        let(:result) { described_class.call('not an svg') }
 
-        expect(result).to be_failure
-        expect(result.error).to eq('Invalid SVG content')
+        it_behaves_like 'failed service result', 'Invalid SVG content'
       end
     end
 
     context 'when HTTP request is successful' do
       let(:http_response) { double('response', code: '200', body: mock_api_response.to_json) }
+      let(:result) { described_class.call(invalid_svg) }
 
       before do
         allow(Net::HTTP).to receive(:new).and_return(double('http').tap do |http|
@@ -79,18 +76,18 @@ RSpec.describe Svg::LlmValidator do
         end)
       end
 
-      it 'returns success with validated SVG data' do
-        result = described_class.call(svg_content: invalid_svg)
+      it_behaves_like 'successful service result'
 
-        expect(result).to be_success
-        expect(result.data[:valid]).to be true
+      it 'returns validated SVG data' do
         expect(result.data[:svg_content]).to eq(valid_svg)
         expect(result.data[:issues_found]).to include('Missing xmlns attribute')
+        expect(result.data[:warnings]).to eq([])
       end
     end
 
     context 'when HTTP request fails' do
       let(:http_response) { double('response', code: '401') }
+      let(:result) { described_class.call(valid_svg) }
 
       before do
         allow(Net::HTTP).to receive(:new).and_return(double('http').tap do |http|
@@ -100,16 +97,12 @@ RSpec.describe Svg::LlmValidator do
         end)
       end
 
-      it 'returns failure with API error' do
-        result = described_class.call(svg_content: valid_svg)
-
-        expect(result).to be_failure
-        expect(result.error).to include('API request failed: 401')
-      end
+      it_behaves_like 'failed service result', 'API request failed: 401'
     end
 
     context 'when response is malformed' do
       let(:http_response) { double('response', code: '200', body: 'invalid json') }
+      let(:result) { described_class.call(valid_svg) }
 
       before do
         allow(Net::HTTP).to receive(:new).and_return(double('http').tap do |http|
@@ -119,30 +112,26 @@ RSpec.describe Svg::LlmValidator do
         end)
       end
 
-      it 'returns failure with parsing error' do
-        result = described_class.call(svg_content: valid_svg)
-
-        expect(result).to be_failure
-        expect(result.error).to eq('Invalid response format from LLM service')
-      end
+      it_behaves_like 'failed service result', 'Invalid response format from LLM service'
     end
 
     context 'when network error occurs' do
+      let(:result) { described_class.call(valid_svg) }
+
       before do
-        allow(Net::HTTP).to receive(:new).and_raise(Net::TimeoutError)
+        allow(Net::HTTP).to receive(:new).and_raise(Timeout::Error)
       end
 
-      it 'returns failure with timeout error' do
-        result = described_class.call(svg_content: valid_svg)
+      it_behaves_like 'failed service result'
 
-        expect(result).to be_failure
+      it 'returns error message as string' do
         expect(result.error).to be_a(String)
       end
     end
   end
 
   describe 'request structure' do
-    let(:service) { described_class.new(svg_content: valid_svg) }
+    let(:service) { described_class.new(valid_svg) }
     let(:http_response) { double('response', code: '200', body: mock_api_response.to_json) }
     let(:request_spy) { double('request') }
 
@@ -165,7 +154,7 @@ RSpec.describe Svg::LlmValidator do
         parsed_body = JSON.parse(body)
         expect(parsed_body['response_format']).to eq({ 'type' => 'json_object' })
         expect(parsed_body['temperature']).to eq(0.7)
-        expect(parsed_body['model']).to eq('anthropic/claude-3.5-sonnet')
+        expect(parsed_body['model']).to eq('google/gemini-2.5-flash')
       end
     end
   end
