@@ -30,15 +30,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
 
-    services:
-      chrome:
-        image: browserless/chrome:latest
-        ports: [3001:3000]
-        env:
-          DEBUG: browserless:*
-          PREBOOT_CHROME: true
-          DEFAULT_LAUNCH_ARGS: '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]'
-        options: --shm-size=2gb
+    # services:
+    #   chrome:
+    #     image: browserless/chrome:latest
+    #     ports: [3001:3000]
+    #     env:
+    #       DEBUG: browserless:*
+    #       PREBOOT_CHROME: true
+    #       DEFAULT_LAUNCH_ARGS: '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]'
+    #     options: --shm-size=2gb
 
     steps:
     - uses: actions/checkout@v4
@@ -67,6 +67,16 @@ jobs:
     - name: Run tests
       run: bundle exec rspec
 
+    - name: Generate Swagger docs
+      run: bundle exec rails rswag:specs:swaggerize
+
+    - name: Upload Swagger artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: swagger-docs
+        path: swagger/
+        retention-days: 30
+
   build:
     if: github.ref == 'refs/heads/main'
     needs: [lint, test]
@@ -74,6 +84,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Download Swagger docs
+      uses: actions/download-artifact@v4
+      with:
+        name: swagger-docs
+        path: swagger/
 
     - uses: docker/setup-buildx-action@v3
 
