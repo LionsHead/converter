@@ -37,6 +37,9 @@ COPY --from=deps /usr/local/bundle /usr/local/bundle
 COPY --from=deps /app/node_modules /app/node_modules
 COPY . .
 
+RUN bundle config set --local deployment true && \
+    bundle config set --local without 'development test'
+
 # Precompile assets for production
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
 
