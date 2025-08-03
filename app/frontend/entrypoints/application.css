@@ -129,12 +129,6 @@
   color: #cc0000;
 }
 
-.status-render {
-  background: #e6f3ff;
-  border: 1px solid #b3e0ff;
-  color: #004080;
-}
-
 .status-completed {
   background: #d4edda;
   border: 1px solid #c3e6cb;

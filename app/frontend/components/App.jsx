@@ -77,7 +77,7 @@ function App() {
     if (isPolling && documentId) {
       interval = setInterval(() => {
         checkDocumentStatus(documentId);
-      }, 2000);
+      }, 1000);
     }
     return () => clearInterval(interval);
   }, [isPolling, documentId]);
@@ -85,13 +85,13 @@ function App() {
   const getStatusText = (status) => {
     switch (status) {
       case 'pending':
+        return 'Waiting...';
+      case 'processing':
         return 'Processing...';
       case 'validation':
         return 'Validating...';
       case 'validation_failed':
         return 'Validation failed';
-      case 'render':
-        return 'Render in progress...';
       case 'completed':
         return 'Completed!';
       case 'failed':
@@ -109,14 +109,12 @@ function App() {
         return 'status-validation';
       case 'validation_failed':
         return 'status-validation-failed';
-      case 'render':
-        return 'status-render';
       case 'completed':
         return 'status-completed';
       case 'failed':
         return 'status-failed';
       default:
-        return '';
+        return 'status-pending';
     }
   };
 
@@ -158,7 +156,7 @@ function App() {
 
           <div className={`status ${getStatusClass(documentData.status)}`}>
             <span className="status-text">
-              Status: {getStatusText(documentData.status)}
+              {getStatusText(documentData.status)}
             </span>
             {isPolling && (
               <div className="spinner"></div>

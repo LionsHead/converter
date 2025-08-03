@@ -4,11 +4,9 @@ class ConvertProcessor < BaseService
   end
 
   def call
-    prepare_svg_content
     validate_document!
     generate_pdf
     attach_pdf_to_document
-    complete_processing
 
     success(@document)
   rescue StandardError => e
@@ -21,12 +19,16 @@ class ConvertProcessor < BaseService
 
   attr_reader :document, :svg_content, :pdf_content
 
-  def prepare_svg_content
-    @svg_content = document.svg_content
-  end
-
   def validate_document!
+    info "ConvertProcessor: Validating document #{document.id}"
+
+    @svg_content = document.svg_content
     document.start_validation!
+
+    if svg_content.blank?
+      document.validation_fail!
+      fail!(error: "SVG content is blank")
+    end
 
     validation_result = SvgValidator.call(svg_content)
 
@@ -36,11 +38,10 @@ class ConvertProcessor < BaseService
     end
 
     document.validation_succeed!
-    @svg_content = validation_result.data
   end
 
   def generate_pdf
-    pdf_result = PdfGenerator.call(@svg_content, watermark_text: "Endurance for MaxaTech")
+    pdf_result = PdfGenerator.call(svg_content, watermark_text: "Endurance for MaxaTech")
 
     fail!(error: "PDF generation failed") if pdf_result.failure?
 
@@ -52,16 +53,13 @@ class ConvertProcessor < BaseService
 
     filename = generate_pdf_filename
 
+    document.generated_file_name = filename
     document.pdf_file.attach(
       io: StringIO.new(@pdf_content),
       filename: filename,
       content_type: "application/pdf"
     )
 
-    document.update!(generated_file_name: filename)
-  end
-
-  def complete_processing
     document.complete!
   end
 

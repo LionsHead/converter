@@ -9,7 +9,7 @@ module Api
         end
 
         if document.save
-          ConvertProcessingJob.perform_later(document.id)
+          ConvertProcessingJob.set(wait: 2.seconds).perform_later(document.id)
 
           render json: UploadedDocumentSerializer.new(document), status: :created
         else

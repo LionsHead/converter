@@ -5,7 +5,6 @@ gem "sqlite3", ">= 2.1"
 gem "puma", ">= 5.0"
 
 gem "ferrum"
-gem "ferrum_pdf"
 
 gem "vite_rails"
 

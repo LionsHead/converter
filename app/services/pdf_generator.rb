@@ -8,6 +8,7 @@ class PdfGenerator < BaseService
     info "PdfGenerator: Starting generation"
 
     html_content = build_html_content
+
     return failure(error: "PDF generation failed: html content is nil") if html_content.blank?
 
     pdf_content = generate_pdf_from html_content
@@ -36,10 +37,12 @@ class PdfGenerator < BaseService
   def generate_pdf_from(html_content)
     info "PdfGenerator: Starting generation from HTML content"
 
-    Tempfile.create(["pdf_generation", ".pdf"]) do |pdf_file|
-      browser = build_headless_browser
-      browser.go_to("data:text/html;charset=utf-8,#{CGI.escape(html_content)}")
+    Tempfile.create(["pdf_generation", ".pdf"], encoding: "binary") do |pdf_file|
+      encoded_html = Base64.strict_encode64(html_content)
+      data_uri = "data:text/html;base64,#{encoded_html}"
 
+      browser = build_headless_browser
+      browser.go_to(data_uri)
       browser.network.wait_for_idle(duration: 1)
 
       browser.pdf(
@@ -65,11 +68,16 @@ class PdfGenerator < BaseService
 
   def build_headless_browser
     config = {
-      ws_url: ENV.fetch("REMOTE_CHROME_WS_URL", "ws://chrome:3000"),
       timeout: 30,
       headless: true,
       browser_options: browser_options
     }
+
+    if ENV["REMOTE_CHROME_WS_URL"].present?
+      config[:ws_url] = ENV.fetch("REMOTE_CHROME_WS_URL", "ws://chrome:3000")
+    else
+      config[:path] = find_local_chrome_path
+    end
 
     Ferrum::Browser.new(config)
   end
