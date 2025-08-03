@@ -93,8 +93,8 @@ jobs:
         file: ./Dockerfile.production
         target: production
         tags: |
-          ghcr.io/${{ lowercase(github.repository) }}:latest
-          ghcr.io/${{ lowercase(github.repository) }}:${{ github.sha }}
+          ghcr.io/lionshead/converter:latest
+          ghcr.io/lionshead/converter:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64
