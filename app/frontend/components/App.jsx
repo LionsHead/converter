@@ -120,6 +120,25 @@ function App() {
 
   return (
     <div className="hero">
+      <div className="docs-links">
+        <a
+          href="/api-docs/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-docs"
+        >
+          <i className="fa-solid fa-book"></i> API Docs
+        </a>
+        <a
+          href="https://github.com/LionsHead/converter"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-docs"
+        >
+          <i className="fa-brands fa-github"></i> GitHub
+        </a>
+      </div>
+
       <h1 className="hero-title">Generate PDF from SVG</h1>
 
       <div className="upload-form">
