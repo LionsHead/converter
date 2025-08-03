@@ -9,7 +9,7 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
       parameter name: :svg_file, in: :formData, schema: {
         type: :object,
         properties: {
-          svg_file: { type: :file, description: 'SVG file to upload' },
+          svg_file: { type: :file, description: 'SVG file to upload' }
         },
         required: %w[svg_file]
       }
@@ -19,7 +19,7 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
           properties: {
             id: { type: :integer, example: 1 },
             original_file_name: { type: :string, example: 'test.svg' },
-            status: { type: :string, example: 'pending', enum: %w[pending processing completed failed] },
+            status: { type: :string, example: 'pending', enum: %w[pending processing completed failed] }
           },
           required: %w[id original_file_name status]
 
@@ -57,7 +57,7 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
             id: { type: :integer, example: 1 },
             original_file_name: { type: :string, example: 'test.svg' },
             pdf_file_url: { type: :string, example: 'url/to/generated_test.pdf', nullable: true },
-            status: { type: :string, example: 'pending', enum: %w[pending processing completed failed] },
+            status: { type: :string, example: 'pending', enum: %w[pending processing completed failed] }
           },
           required: %w[id original_file_name status]
 

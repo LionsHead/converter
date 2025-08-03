@@ -95,10 +95,9 @@ class PdfGenerator < BaseService
       "/usr/bin/chromium-browser",
       "/usr/bin/google-chrome",
       "/usr/bin/google-chrome-stable",
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     ]
 
     paths.find { |path| File.exist?(path) }
   end
 end
-

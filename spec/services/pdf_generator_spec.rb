@@ -128,5 +128,4 @@ RSpec.describe PdfGenerator do
       it { is_expected.to respond_to(:call) }
     end
   end
-
 end

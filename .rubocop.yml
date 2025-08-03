@@ -12,3 +12,6 @@ AllCops:
 
 Layout/BlockEndNewline:
   Enabled: false
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: false

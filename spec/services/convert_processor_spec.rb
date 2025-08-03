@@ -157,5 +157,4 @@ RSpec.describe ConvertProcessor do
       end
     end
   end
-
 end
