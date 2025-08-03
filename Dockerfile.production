@@ -14,35 +14,34 @@ RUN apt-get update -qq && \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean
 
-COPY --from=node /usr/local/bin/node /usr/local/bin/
+# Copy Node.js binaries and modules
+COPY --from=node /usr/local/bin/ /usr/local/bin/
 COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
-RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 
 # Set working directory
 WORKDIR /app
 
+# Stage: deps
 FROM base AS deps
-COPY package*.json ./
 COPY Gemfile* ./
-
-# Install dependencies
 RUN gem install bundler:2.5.6 --no-document && \
   bundle config set --local deployment true && \
   bundle config set --local without 'development test' && \
-  bundle install --jobs $(nproc) && \
-  npm ci --omit=dev --prefer-offline
+  bundle install --jobs $(nproc)
 
-FROM base AS production
-COPY --from=deps /usr/local/bundle /usr/local/bundle
-COPY --from=deps /app/node_modules /app/node_modules
+COPY package*.json ./
+RUN npm ci --prefer-offline
+
+# Stage: builder
+FROM deps AS builder
 COPY . .
-
-RUN bundle config set --local deployment true && \
-    bundle config set --local without 'development test' && \
-    bundle install --jobs $(nproc)
-
 # Precompile assets for production
 RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile
+
+# Stage: production
+FROM base AS production
+COPY --from=deps /usr/local/bundle /usr/local/bundle
+COPY --from=builder /app /app
 
 # Create non-root user for security
 RUN groupadd -r app && useradd -r -g app app && \
