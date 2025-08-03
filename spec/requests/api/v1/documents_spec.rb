@@ -6,12 +6,27 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
       consumes 'multipart/form-data'
       produces 'application/json'
       description 'Uploads an SVG file and convert.'
-      parameter name: :svg_file, in: :formData, schema: {
-        type: :object,
-        properties: {
-          svg_file: { type: :file, description: 'SVG file to upload' }
-        },
-        required: %w[svg_file]
+
+      # TODO: rswag bugs..
+      # parameter name: :svg_file, in: :formData, type: :file, required: true, description: 'SVG file to upload'
+      # Structure directly..
+      metadata[:operation][:requestBody] = {
+        required: true,
+        content: {
+          'multipart/form-data': {
+            schema: {
+              type: :object,
+              properties: {
+                svg_file: {
+                  type: :string,
+                  format: :binary,
+                  description: 'SVG file to upload'
+                }
+              },
+              required: [:svg_file]
+            }
+          }
+        }
       }
 
       response 201, 'created' do
