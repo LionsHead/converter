@@ -9,9 +9,11 @@ module Api
         end
 
         if document.save
+          ConvertProcessingJob.perform_later(document.id)
+
           render json: UploadedDocumentSerializer.new(document), status: :created
         else
-          render json: ErrorSerializer.new(document.errors), status: :unprocessable_content
+          render json: { errors: document.errors.full_messages }, status: :unprocessable_content
         end
       end
 

@@ -137,7 +137,7 @@ function App() {
           className="btn btn-primary"
           disabled={isUploading || !file || isPolling}
         >
-          <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          <i class="fa-solid fa-upload"></i>
           {isUploading ? ' Uploading...' : ' Upload SVG'}
         </button>
       </div>
@@ -171,23 +171,11 @@ function App() {
               download
               className="btn btn-primary download-btn"
             >
-              <i class="fa-solid fa-arrow-down-from-bracket"></i>
+              <i class="fa-solid fa-download"></i>
               {' Download PDF'}
             </a>
           )}
 
-          {(documentData.status === 'failed' || documentData.status === 'validation_failed') && (
-            <button
-              onClick={() => {
-                setDocumentData(null);
-                setDocumentId(null);
-                setFile(null);
-              }}
-              className="btn btn-secondary retry-btn"
-            >
-              <i class="fa-solid fa-arrows-rotate"></i> Try Again
-            </button>
-          )}
         </div>
       )}
     </div>

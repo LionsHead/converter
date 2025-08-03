@@ -1,3 +1,4 @@
 
 vite: bin/vite dev
-web: bin/rails s
+web: bundle exec rails server -b 0.0.0.0
+worker: bundle exec rails solid_queue:start

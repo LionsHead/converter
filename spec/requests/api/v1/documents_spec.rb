@@ -38,7 +38,7 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
         let(:svg_file) { nil }
 
         run_test! do
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end
@@ -61,7 +61,7 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
           },
           required: %w[id original_file_name status]
 
-        let(:document) { create(:document) }
+        let(:document) { create(:document, :with_svg_file) }
         let(:id) { document.id }
 
         run_test! do

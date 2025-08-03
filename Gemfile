@@ -16,6 +16,8 @@ gem "alba"
 
 gem "aws-sdk-s3", require: false
 
+gem "solid_queue"
+
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
 group :development, :test do

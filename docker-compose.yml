@@ -24,13 +24,13 @@ services:
       - "9222:9222"
     environment:
       - DEBUG=browserless:*
+      - PREBOOT_CHROME=true
       # - MAX_CONCURRENT_SESSIONS=10
       # - CONNECTION_TIMEOUT=60000
       # - MAX_QUEUE_LENGTH=100
-      # - PREBOOT_CHROME=true
       # - DEMO_MODE=false
       # - ENABLE_CORS=true
-      # - DEFAULT_LAUNCH_ARGS=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]
+      - DEFAULT_LAUNCH_ARGS=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]
     env_file:
       - .env.local
     networks:
