@@ -32,7 +32,7 @@ class ConvertProcessor < BaseService
       fail!(error: "SVG content is blank")
     end
 
-    validation_result = SvgValidator.call(svg_content)
+    validation_result = Svg::Validator.call(svg_content)
 
     unless validation_result.success?
       document.validation_fail!
@@ -52,7 +52,7 @@ class ConvertProcessor < BaseService
       }
     }
 
-    pdf_result = PdfGenerator.call(svg_content, **custom_config)
+    pdf_result = Pdf::Generator.call(svg_content, **custom_config)
 
     fail!(error: "PDF generation failed") if pdf_result.failure?
 

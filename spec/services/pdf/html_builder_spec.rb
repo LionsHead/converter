@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe Pdf::HtmlBuilder do
+RSpec.describe Pdf::TemplateBuilder do
   let(:svg_content) { '<svg><circle cx="50" cy="50" r="40" fill="red" /></svg>' }
   let(:watermark_config) { { text: 'Test Watermark' } }
 

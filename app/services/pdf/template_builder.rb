@@ -1,5 +1,5 @@
 module Pdf
-  class HtmlBuilder < BaseService
+  class TemplateBuilder < BaseService
     DEFAULT_CONFIG = {
       text: "Maxa Watermark",
       size: { width: 250, height: 250 },

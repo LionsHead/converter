@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe SvgValidator do
+RSpec.describe Svg::Validator do
   let(:valid_svg) { '<svg><circle cx="50" cy="50" r="40" fill="red" /></svg>' }
   let(:invalid_svg) { '<svg><circle cx="50" cy="50" r="40" fill="red">' }
   let(:empty_svg) { '' }

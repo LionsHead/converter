@@ -1,10 +1,10 @@
-class SvgValidator < BaseService
+class Svg::Validator < BaseService
   def initialize(svg_content)
     @svg_content = svg_content
   end
 
   def call
-    info "SvgValidator: Starting SVG validation"
+    info "Svg::Validator: Starting SVG validation"
 
     return failure(error: "Empty SVG content") if svg_content.blank?
 

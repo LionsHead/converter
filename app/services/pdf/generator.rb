@@ -1,4 +1,4 @@
-class PdfGenerator < BaseService
+class Pdf::Generator < BaseService
   def initialize(svg_content, page_config: {}, watermark_config: {})
     @svg_content = svg_content
     @page_config = page_config
@@ -6,7 +6,7 @@ class PdfGenerator < BaseService
   end
 
   def call
-    info "PdfGenerator: Starting generation"
+    info "Pdf::Generator: Starting generation"
 
     html_content = build_html_content
 
@@ -29,14 +29,14 @@ class PdfGenerator < BaseService
   attr_reader :svg_content, :page_config, :watermark_config
 
   def build_html_content
-    result = Pdf::HtmlBuilder.call(svg_content, watermark_config: watermark_config)
+    result = Pdf::TemplateBuilder.call(svg_content, watermark_config: watermark_config)
     return nil if result.failure?
 
     result.data
   end
 
   def generate_pdf_from(html_content)
-    info "PdfGenerator: Starting generation from HTML content"
+    info "Pdf::Generator: Starting generation from HTML content"
 
     Tempfile.create(["pdf_generation", ".pdf"], encoding: "binary") do |pdf_file|
       encoded_html = Base64.strict_encode64(html_content)

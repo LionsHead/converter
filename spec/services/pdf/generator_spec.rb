@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe PdfGenerator do
+RSpec.describe Pdf::Generator do
   let(:svg_content) { '<svg><circle cx="50" cy="50" r="40" fill="red" /></svg>' }
   let(:page_config) { { margin: { top: '10mm' } } }
   let(:watermark_config) { { text: 'Sample Watermark', opacity: 0.5 } }
@@ -12,7 +12,7 @@ RSpec.describe PdfGenerator do
 
     context 'when PDF generation succeeds' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
@@ -21,13 +21,13 @@ RSpec.describe PdfGenerator do
 
       it 'builds HTML with correct parameters' do
         result
-        expect(Pdf::HtmlBuilder).to have_received(:call).with(svg_content, watermark_config: watermark_config)
+        expect(Pdf::TemplateBuilder).to have_received(:call).with(svg_content, watermark_config: watermark_config)
       end
     end
 
     context 'when HTML building fails' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(failure_result("HTML build error"))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(failure_result("HTML build error"))
       end
 
       it { should be_failed_service_result }
@@ -36,7 +36,7 @@ RSpec.describe PdfGenerator do
 
     context 'when HTML content is blank' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(''))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(''))
       end
 
       it { should be_failed_service_result }
@@ -45,7 +45,7 @@ RSpec.describe PdfGenerator do
 
     context 'when PDF generation returns nil' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(nil)
       end
 
@@ -55,7 +55,7 @@ RSpec.describe PdfGenerator do
 
     context 'when PDF generation returns empty content' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return('')
       end
 
@@ -65,7 +65,7 @@ RSpec.describe PdfGenerator do
 
     context 'when exception occurs during generation' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_raise(StandardError, "Chrome crashed")
       end
 
@@ -77,7 +77,7 @@ RSpec.describe PdfGenerator do
       subject(:result) { described_class.call(svg_content) }
 
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow_any_instance_of(described_class).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
@@ -85,7 +85,7 @@ RSpec.describe PdfGenerator do
 
       it 'passes empty configs to HTML builder' do
         result
-        expect(Pdf::HtmlBuilder).to have_received(:call).with(svg_content, watermark_config: {})
+        expect(Pdf::TemplateBuilder).to have_received(:call).with(svg_content, watermark_config: {})
       end
     end
   end
@@ -96,7 +96,7 @@ RSpec.describe PdfGenerator do
 
     context 'when generation succeeds' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_return(pdf_content)
       end
 
@@ -106,7 +106,7 @@ RSpec.describe PdfGenerator do
 
     context 'when HTML building fails' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(failure_result("HTML error"))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(failure_result("HTML error"))
       end
 
       it { expect(result).to be_failed_service_result }
@@ -115,7 +115,7 @@ RSpec.describe PdfGenerator do
 
     context 'when PDF generation fails' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_return(nil)
       end
 
@@ -125,7 +125,7 @@ RSpec.describe PdfGenerator do
 
     context 'when exception is raised' do
       before do
-        allow(Pdf::HtmlBuilder).to receive(:call).and_return(success_result(html_content))
+        allow(Pdf::TemplateBuilder).to receive(:call).and_return(success_result(html_content))
         allow(generator).to receive(:generate_pdf_from).and_raise(StandardError, "PDF error")
       end
 

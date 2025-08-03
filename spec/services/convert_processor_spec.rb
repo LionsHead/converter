@@ -15,8 +15,8 @@ RSpec.describe ConvertProcessor do
   describe '#call' do
     context 'when conversion succeeds' do
       before do
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
-        allow(PdfGenerator).to receive(:call).and_return(success_result(pdf_content))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
+        allow(Pdf::Generator).to receive(:call).and_return(success_result(pdf_content))
         # allow(document).to receive(:save!)
       end
 
@@ -69,7 +69,7 @@ RSpec.describe ConvertProcessor do
       let(:validation_error) { "Invalid SVG structure" }
 
       before do
-        allow(SvgValidator).to receive(:call).and_return(failure_result(validation_error))
+        allow(Svg::Validator).to receive(:call).and_return(failure_result(validation_error))
       end
 
       it_behaves_like 'failed service result', 'SVG validation failed'
@@ -82,13 +82,13 @@ RSpec.describe ConvertProcessor do
         result
       end
 
-      it { expect(PdfGenerator).not_to receive(:call); result }
+      it { expect(Pdf::Generator).not_to receive(:call); result }
     end
 
     context 'when PDF generation fails' do
       before do
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
-        allow(PdfGenerator).to receive(:call).and_return(failure_result("Generation error"))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
+        allow(Pdf::Generator).to receive(:call).and_return(failure_result("Generation error"))
       end
 
       it_behaves_like 'failed service result', 'PDF generation failed'
@@ -101,8 +101,8 @@ RSpec.describe ConvertProcessor do
 
     context 'when PDF content is empty' do
       before do
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
-        allow(PdfGenerator).to receive(:call).and_return(success_result(''))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
+        allow(Pdf::Generator).to receive(:call).and_return(success_result(''))
       end
 
       it_behaves_like 'failed service result', 'Empty PDF content'
@@ -115,7 +115,7 @@ RSpec.describe ConvertProcessor do
 
     context 'when document state transition fails' do
       before do
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
         allow(document).to receive(:start_validation!).and_raise(StandardError, "State error")
       end
 
@@ -130,7 +130,7 @@ RSpec.describe ConvertProcessor do
     context 'when document is already in failed state' do
       before do
         allow(document).to receive(:failed?).and_return(true)
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
         allow(document).to receive(:start_validation!).and_raise(StandardError, "Error")
       end
 
@@ -144,7 +144,7 @@ RSpec.describe ConvertProcessor do
       before do
         allow(document).to receive(:failed?).and_return(false)
         allow(document).to receive(:validation_failed?).and_return(true)
-        allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
+        allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
         allow(document).to receive(:start_validation!).and_raise(StandardError, "Error")
       end
 
@@ -161,8 +161,8 @@ RSpec.describe ConvertProcessor do
     end
 
     before do
-      allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
-      allow(PdfGenerator).to receive(:call).and_return(success_result(pdf_content))
+      allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
+      allow(Pdf::Generator).to receive(:call).and_return(success_result(pdf_content))
       allow(document).to receive(:save!)  # Мокаем save! для generated_file_name
     end
 
@@ -198,12 +198,12 @@ RSpec.describe ConvertProcessor do
     let(:watermark_config) { { text: 'Endurance' } }
 
     before do
-      allow(SvgValidator).to receive(:call).and_return(success_result(svg_content))
-      allow(PdfGenerator).to receive(:call).and_return(success_result(pdf_content))
+      allow(Svg::Validator).to receive(:call).and_return(success_result(svg_content))
+      allow(Pdf::Generator).to receive(:call).and_return(success_result(pdf_content))
       allow(document).to receive(:save!)
     end
-    it 'should call PdfGenerator with watermark text' do
-      expect(PdfGenerator).to receive(:call).with(
+    it 'should call Pdf::Generator with watermark text' do
+      expect(Pdf::Generator).to receive(:call).with(
         svg_content,
         page_config: {
           margin: {
