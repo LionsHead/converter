@@ -165,17 +165,20 @@ function App() {
             )}
           </div>
 
-          {documentData.pdf_file_url && (
-            <a
-              href={documentData.pdf_file_url}
-              download
-              className="btn btn-primary download-btn"
-            >
-              <i class="fa-solid fa-download"></i>
-              {' Download PDF'}
-            </a>
-          )}
+        </div>
+      )}
 
+
+      {documentData && documentData.pdf_file_url && (
+        <div className="upload-form">
+          <a
+            href={documentData.pdf_file_url}
+            download
+            className="btn btn-primary download-btn"
+          >
+            <i class="fa-solid fa-download"></i>
+            {' Download PDF'}
+            </a>
         </div>
       )}
     </div>

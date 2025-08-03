@@ -3,7 +3,6 @@ services:
     build: .
     ports:
       - "3000:3000"
-      - "5173:5173"
     volumes:
       - .:/app
       - node_modules_volume:/app/node_modules
@@ -21,15 +20,9 @@ services:
     image: browserless/chrome:latest
     ports:
       - "3001:3000"
-      - "9222:9222"
     environment:
       - DEBUG=browserless:*
       - PREBOOT_CHROME=true
-      # - MAX_CONCURRENT_SESSIONS=10
-      # - CONNECTION_TIMEOUT=60000
-      # - MAX_QUEUE_LENGTH=100
-      # - DEMO_MODE=false
-      # - ENABLE_CORS=true
       - DEFAULT_LAUNCH_ARGS=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]
     env_file:
       - .env.local

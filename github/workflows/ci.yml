@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  RAILS_ENV: test
+  RUBY_VERSION: 3.4.5
+  NODE_VERSION: lts/*
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      chrome:
+        image: browserless/chrome:latest
+        ports: [3001:3000]
+        env:
+          DEBUG: browserless:*
+          PREBOOT_CHROME: true
+          DEFAULT_LAUNCH_ARGS: '["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--remote-debugging-address=0.0.0.0"]'
+        options: --shm-size=2gb
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Ruby & Node
+      run: |
+        # Параллельная установка через apt
+        sudo apt-get update -qq
+        sudo apt-get install -y libpq-dev libsqlite3-dev &
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: npm
+
+    - name: Install & setup
+      run: |
+        npm ci --prefer-offline
+        bundle exec rails db:setup
+
+    - name: Run tests
+      run: bundle exec rspec
+
+  build:
+    if: github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: docker/setup-buildx-action@v3
+
+    - uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.production
+        target: production
+        tags: |
+          ${{ github.repository }}:latest
+          ${{ github.repository }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
