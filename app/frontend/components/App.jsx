@@ -7,6 +7,7 @@ function App() {
   const [error, setError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [checkForAI, setCheckForAI] = useState(false); // New state for AI checkbox
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -28,6 +29,7 @@ function App() {
 
     const formData = new FormData();
     formData.append('svg_file', file);
+    formData.append('check_with_ai', checkForAI);
 
     try {
       const response = await fetch('/api/v1/documents', {
@@ -62,7 +64,6 @@ function App() {
       }
       const data = await response.json();
       setDocumentData(data);
-
       if (data.status === 'completed' || data.status === 'failed' || data.status === 'validation_failed') {
         setIsPolling(false);
       }
@@ -105,8 +106,10 @@ function App() {
     switch (status) {
       case 'pending':
         return 'status-pending';
-      case 'validation':
-        return 'status-validation';
+      case 'processing':
+        return 'status-processing';
+      case 'validating':
+        return 'status-validating';
       case 'validation_failed':
         return 'status-validation-failed';
       case 'completed':
@@ -138,9 +141,7 @@ function App() {
           <i className="fa-brands fa-github"></i> GitHub
         </a>
       </div>
-
       <h1 className="hero-title">Generate PDF from SVG</h1>
-
       <div className="upload-form">
         <input
           type="file"
@@ -149,30 +150,36 @@ function App() {
           className="file-input"
           disabled={isUploading || isPolling}
         />
+        <div className="checkbox-container">
+          <input
+            type="checkbox"
+            id="checkForAI"
+            checked={checkForAI}
+            onChange={(e) => setCheckForAI(e.target.checked)}
+            disabled={isUploading || isPolling}
+          />
+          <label htmlFor="checkForAI" className="checkbox-label">Check with AI</label>
+        </div>
         <button
           onClick={handleSubmit}
           className="btn btn-primary"
           disabled={isUploading || !file || isPolling}
         >
-          <i class="fa-solid fa-upload"></i>
+          <i className="fa-solid fa-upload"></i>
           {isUploading ? ' Uploading...' : ' Upload SVG'}
         </button>
       </div>
-
       {file && !documentData && (
         <p className="file-info">File: {file.name}</p>
       )}
-
       {error && (
         <p className="error-message">{error}</p>
       )}
-
       {documentData && (
         <div className="document-status">
           <p className="file-info">
             File: {documentData.original_file_name}
           </p>
-
           <div className={`status ${getStatusClass(documentData.status)}`}>
             <span className="status-text">
               {getStatusText(documentData.status)}
@@ -181,10 +188,8 @@ function App() {
               <div className="spinner"></div>
             )}
           </div>
-
         </div>
       )}
-
 
       {documentData && documentData.pdf_file_url && (
         <div className="upload-form">
@@ -193,9 +198,9 @@ function App() {
             download
             className="btn btn-primary download-btn"
           >
-            <i class="fa-solid fa-download"></i>
+            <i className="fa-solid fa-download"></i>
             {' Download PDF'}
-            </a>
+          </a>
         </div>
       )}
     </div>

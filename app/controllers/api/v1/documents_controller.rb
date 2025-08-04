@@ -9,7 +9,8 @@ module Api
         end
 
         if document.save
-          ConvertProcessingJob.set(wait: 2.seconds).perform_later(document.id)
+          with_ai = params[:check_with_ai] == "true"
+          ConvertProcessingJob.set(wait: 2.seconds).perform_later(document.id, check_with_ai: with_ai)
 
           render json: UploadedDocumentSerializer.new(document), status: :created
         else

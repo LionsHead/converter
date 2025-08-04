@@ -1,9 +1,11 @@
 class ConvertProcessor < BaseService
-  def initialize(document)
+  def initialize(document, with_ai:)
     @document = document
+    @with_ai = with_ai
   end
 
   def call
+    info "ConvertProcessor: Start document #{document.id} #{ with_ai ? "with ai check" : "native"}"
     validate_document!
     generate_pdf
     attach_pdf_to_document
@@ -19,10 +21,10 @@ class ConvertProcessor < BaseService
 
   private
 
-  attr_reader :document, :svg_content, :pdf_content
+  attr_reader :document, :svg_content, :pdf_content, :with_ai
 
   def validate_document!
-    info "ConvertProcessor: Validating document #{document.id}"
+    info "ConvertProcessor: Validating document #{document.id} #{ with_ai ? "with ai check" : "native"}"
 
     @svg_content = document.svg_content
     document.start_validation!
@@ -32,18 +34,27 @@ class ConvertProcessor < BaseService
       fail!(error: "SVG content is blank")
     end
 
+    return validate_document_with_ai if with_ai
+
+    result = Svg::Validator.call(svg_content)
+
+    return document.validation_succeed! if result.success?
+
+    document.validation_fail!
+    fail!(error: "SVG validation failed: #{result.error}")
+  end
+
+  def validate_document_with_ai
     result = Svg::LlmValidator.call(svg_content)
 
-    if result.success?
-      if result.data[:fixed]
-        info "ConvertProcessor: apply fixed data"
-        # TODO: or render second versions
-        # issues_found: ["list of issues that were fixed"],
-        # warnings: ["list of potential issues or suggestions"]
-        @svg_content = result.data[:svg_content]
-      end
-      document.validation_succeed!
-      return
+    if result.success? && result.data[:fixed]
+      info "ConvertProcessor: apply fixed data"
+      # TODO: or render second versions
+      # issues_found: ["list of issues that were fixed"],
+      # warnings: ["list of potential issues or suggestions"]
+      @svg_content = result.data[:svg_content]
+
+      return document.validation_succeed!
     end
 
     document.validation_fail!

@@ -7,13 +7,21 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
       produces 'application/json'
       description 'Uploads an SVG file and convert.'
 
-      parameter name: :svg_file, in: :formData, schema: {
-        type: :object,
-        properties: {
-          svg_file: { type: :file, description: 'SVG file to upload' }
-        },
-        required: %w[svg_file]
-      }
+      parameter name: :svg_file,
+                in: :formData,
+                schema: {
+                  type: :object,
+                    properties: {
+                      svg_file: { type: :file, description: 'SVG file to upload'
+                    }
+                  },
+                  required: %w[svg_file]
+                }
+       parameter name: :check_with_ai,
+                 in: :formData,
+                  type: :boolean,
+                  required: false,
+                  description: 'Whether to perform an AI check on the SVG.'
 
       response 201, 'created' do
         schema type: :object,
@@ -25,12 +33,22 @@ RSpec.describe 'Api::V1::Documents', type: :request, swagger_doc: 'v1/swagger.ya
           required: %w[id original_file_name status]
 
         let(:svg_file) { fixture_file_upload(Rails.root.join('spec', 'fixtures', 'files', 'test.svg'), 'image/svg+xml') }
+        let(:check_with_ai) { false }
 
         run_test! do
           expect(response).to have_http_status(:created)
           expect(JSON.parse(response.body)['id']).to be_present
         end
+
+        context 'with AI check enabled' do
+          let(:check_with_ai) { true }
+          run_test! do
+            expect(response).to have_http_status(:created)
+            expect(JSON.parse(response.body)['id']).to be_present
+          end
+        end
       end
+
       response 422, 'unprocessable entity' do
         schema type: :object,
                properties: { errors: { type: :array, items: { type: :string } } },
