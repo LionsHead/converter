@@ -21,26 +21,21 @@ function App() {
       setError('Please select a file!');
       return;
     }
-
     setIsUploading(true);
     setError(null);
     setDocumentId(null);
     setDocumentData(null);
-
     const formData = new FormData();
     formData.append('svg_file', file);
     formData.append('check_with_ai', checkForAI);
-
     try {
       const response = await fetch('/api/v1/documents', {
         method: 'POST',
         body: formData,
       });
-
       if (!response.ok) {
         throw new Error('Server error: ' + response.statusText);
       }
-
       const data = await response.json();
       if (data.id) {
         setDocumentId(data.id);
@@ -90,7 +85,7 @@ function App() {
       case 'processing':
         return 'Processing...';
       case 'validating':
-        return 'Validating...';
+        return checkForAI ? 'Validating with LLM improvements...' : 'Validating...';
       case 'validation_failed':
         return 'Validation failed';
       case 'completed':
@@ -188,9 +183,36 @@ function App() {
               <div className="spinner"></div>
             )}
           </div>
+
+          {['completed', 'failed', 'validation_failed'].includes(documentData.status) &&
+            documentData.issues_found?.length > 0 && (
+              <div className="issues-section">
+                <h3>
+                  <i className="fa-solid fa-check-circle"></i> Issues Fixed
+                </h3>
+                <ul className="issues-list">
+                  {documentData.issues_found.map((issue, index) => (
+                    <li key={index}>{issue}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          {['completed', 'failed', 'validation_failed'].includes(documentData.status) &&
+            documentData.warnings?.length > 0 && (
+              <div className="warnings-section">
+                <h3>
+                  <i className="fa-solid fa-exclamation-triangle"></i> Warnings
+                </h3>
+                <ul className="warnings-list">
+                  {documentData.warnings.map((warning, index) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
         </div>
       )}
-
       {documentData && documentData.pdf_file_url && (
         <div className="upload-form">
           <a

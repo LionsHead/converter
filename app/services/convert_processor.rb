@@ -49,9 +49,9 @@ class ConvertProcessor < BaseService
 
     if result.success? && result.data[:fixed]
       info "ConvertProcessor: apply fixed data"
-      # TODO: or render second versions
-      # issues_found: ["list of issues that were fixed"],
-      # warnings: ["list of potential issues or suggestions"]
+      llm_message = result.data.slice(:issues_found, :warnings)
+      info "ConvertProcessor: #{llm_message}"
+      document.update llm_message
       @svg_content = result.data[:svg_content]
 
       return document.validation_succeed!

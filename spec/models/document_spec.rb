@@ -7,6 +7,16 @@ RSpec.describe Document, type: :model do
     it { should validate_inclusion_of(:status).in_array(Document::STATES) }
   end
 
+  describe 'llm responses' do
+      it "stores LLM responses" do
+        document = create(:document, :with_svg_file)
+        document.update(issues_found: ["issue"], warnings: ["warn"])
+
+        expect(document.issues_found).to eq(["issue"])
+        expect(document.warnings).to eq(["warn"])
+      end
+  end
+
   describe 'attachments' do
     it { should have_one_attached(:svg_file) }
     it { should have_one_attached(:pdf_file) }
