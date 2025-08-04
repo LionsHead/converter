@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 function App() {
   const [file, setFile] = useState(null);
   const [documentId, setDocumentId] = useState(null);
@@ -7,7 +6,7 @@ function App() {
   const [error, setError] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
-  const [checkForAI, setCheckForAI] = useState(false); // New state for AI checkbox
+  const [checkForAI, setCheckForAI] = useState(false);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -15,7 +14,6 @@ function App() {
     setDocumentData(null);
     setError(null);
   };
-
   const handleSubmit = async () => {
     if (!file) {
       setError('Please select a file!');
@@ -50,7 +48,6 @@ function App() {
       setIsUploading(false);
     }
   };
-
   const checkDocumentStatus = async (id) => {
     try {
       const response = await fetch(`/api/v1/documents/${id}`);
@@ -67,7 +64,6 @@ function App() {
       setIsPolling(false);
     }
   };
-
   useEffect(() => {
     let interval;
     if (isPolling && documentId) {
@@ -77,7 +73,6 @@ function App() {
     }
     return () => clearInterval(interval);
   }, [isPolling, documentId]);
-
   const getStatusText = (status) => {
     switch (status) {
       case 'pending':
@@ -96,7 +91,6 @@ function App() {
         return status;
     }
   };
-
   const getStatusClass = (status) => {
     switch (status) {
       case 'pending':
@@ -115,7 +109,7 @@ function App() {
         return 'status-pending';
     }
   };
-
+  const isFormDisabled = isUploading || isPolling;
   return (
     <div className="hero">
       <div className="docs-links">
@@ -143,7 +137,7 @@ function App() {
           accept=".svg"
           onChange={handleFileChange}
           className="file-input"
-          disabled={isUploading || isPolling}
+          disabled={isFormDisabled}
         />
         <div className="checkbox-container">
           <input
@@ -151,14 +145,14 @@ function App() {
             id="checkForAI"
             checked={checkForAI}
             onChange={(e) => setCheckForAI(e.target.checked)}
-            disabled={isUploading || isPolling}
+            disabled={isFormDisabled}
           />
           <label htmlFor="checkForAI" className="checkbox-label">Check with AI</label>
         </div>
         <button
           onClick={handleSubmit}
           className="btn btn-primary"
-          disabled={isUploading || !file || isPolling}
+          disabled={isFormDisabled || !file}
         >
           <i className="fa-solid fa-upload"></i>
           {isUploading ? ' Uploading...' : ' Upload SVG'}
@@ -183,7 +177,6 @@ function App() {
               <div className="spinner"></div>
             )}
           </div>
-
           {['completed', 'failed', 'validation_failed'].includes(documentData.status) &&
             documentData.issues_found?.length > 0 && (
               <div className="issues-section">
@@ -197,7 +190,6 @@ function App() {
                 </ul>
               </div>
             )}
-
           {['completed', 'failed', 'validation_failed'].includes(documentData.status) &&
             documentData.warnings?.length > 0 && (
               <div className="warnings-section">
@@ -217,7 +209,8 @@ function App() {
         <div className="upload-form">
           <a
             href={documentData.pdf_file_url}
-            download
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-primary download-btn"
           >
             <i className="fa-solid fa-download"></i>
@@ -228,5 +221,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
